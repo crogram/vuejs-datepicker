@@ -1,5 +1,5 @@
 <template>
-  <div class="vdp-datepicker" :class="wrapperClass">
+  <div class="vdp-datepicker" :class="['wrapperClass',isRtl ? 'rtl' : '']">
     <div :class="{'input-group' : bootstrapStyling}">
       <span class="vdp-datepicker__calendar-button" :class="{'input-group-addon' : bootstrapStyling}" v-if="calendarButton" @click="showCalendar"><i :class="calendarButtonIcon"><span v-if="calendarButtonIcon.length === 0">&hellip;</span></i></span>
       <input
@@ -21,60 +21,67 @@
         <div :class="[calendarClass, 'vdp-datepicker__calendar']" v-show="showDayView" v-bind:style="calendarStyle">
             <header>
                 <span
-                    @click="previousMonth"
+                    @click="isRtl ? nextMonth() : previousMonth()"
                     class="prev"
-                    v-bind:class="{ 'disabled' : previousMonthDisabled(pageDate) }">&lt;</span>
-                <span @click="showMonthCalendar" class="up">{{ currMonthName }} {{ currYear }}</span>
+                    v-bind:class="{ 'disabled' : isRtl ? nextMonthDisabled(pageDate) : previousMonthDisabled(pageDate) }">&lt;</span>
+                <span @click="showMonthCalendar" :class="!dayViewOnly ? 'up' : ''">{{ currMonthName }} {{ currYear }}
+                </span>
                 <span
-                    @click="nextMonth"
+                    @click="isRtl ? previousMonth() : nextMonth()"
                     class="next"
-                    v-bind:class="{ 'disabled' : nextMonthDisabled(pageDate) }">&gt;</span>
+                    v-bind:class="{ 'disabled' : isRtl ? previousMonthDisabled(pageDate) : nextMonthDisabled(pageDate) }">&gt;</span>
             </header>
-            <span class="cell day-header" v-for="d in daysOfWeek">{{ d }}</span>
-            <span class="cell day blank" v-for="d in blankDays"></span><!--
-            --><span class="cell day"
-                v-for="day in days"
-                track-by="timestamp"
-                v-bind:class="{ 'selected':day.isSelected, 'disabled':day.isDisabled, 'highlighted': day.isHighlighted, 'today': day.isToday}"
-                @click="selectDate(day)">{{ day.date }}</span>
+            <div :class="isRtl ? 'flex-rtl' : ''">
+              <span class="cell day-header" v-for="d in daysOfWeek">{{ d }}</span>
+              <span class="cell day blank" v-for="d in blankDays"></span><!--
+              --><span class="cell day"
+                  v-for="day in days"
+                  track-by="timestamp"
+                  v-bind:class="dayClasses(day)"
+                  @click="selectDate(day)">{{ day.date }}</span>
+            </div>
         </div>
 
         <!-- Month View -->
-        <div :class="[calendarClass, 'vdp-datepicker__calendar']" v-show="showMonthView" v-bind:style="calendarStyle">
-            <header>
-                <span
-                    @click="previousYear"
-                    class="prev"
-                    v-bind:class="{ 'disabled' : previousYearDisabled(pageDate) }">&lt;</span>
-                <span @click="showYearCalendar" class="up">{{ getPageYear() }}</span>
-                <span
-                    @click="nextYear"
-                    class="next"
-                    v-bind:class="{ 'disabled' : nextYearDisabled(pageDate) }">&gt;</span>
-            </header>
-            <span class="cell month"
-                v-for="month in months"
-                track-by="timestamp"
-                v-bind:class="{ 'selected': month.isSelected, 'disabled': month.isDisabled }"
-                @click.stop="selectMonth(month)">{{ month.month }}</span>
-        </div>
+        <template v-if="!dayViewOnly">
+          <div :class="[calendarClass, 'vdp-datepicker__calendar']" v-show="showMonthView" v-bind:style="calendarStyle">
+              <header>
+                  <span
+                      @click="previousYear"
+                      class="prev"
+                      v-bind:class="{ 'disabled' : previousYearDisabled(pageDate) }">&lt;</span>
+                  <span @click="showYearCalendar" class="up">{{ getPageYear() }}</span>
+                  <span
+                      @click="nextYear"
+                      class="next"
+                      v-bind:class="{ 'disabled' : nextYearDisabled(pageDate) }">&gt;</span>
+              </header>
+              <span class="cell month"
+                  v-for="month in months"
+                  track-by="timestamp"
+                  v-bind:class="{ 'selected': month.isSelected, 'disabled': month.isDisabled }"
+                  @click.stop="selectMonth(month)">{{ month.month }}</span>
+          </div>
+        </template>
 
         <!-- Year View -->
-        <div :class="[calendarClass, 'vdp-datepicker__calendar']" v-show="showYearView" v-bind:style="calendarStyle">
-            <header>
-                <span @click="previousDecade" class="prev"
-                    v-bind:class="{ 'disabled' : previousDecadeDisabled(pageDate) }">&lt;</span>
-                <span>{{ getPageDecade() }}</span>
-                <span @click="nextDecade" class="next"
-                    v-bind:class="{ 'disabled' : nextMonthDisabled(pageDate) }">&gt;</span>
-            </header>
-            <span
-                class="cell year"
-                v-for="year in years"
-                track-by="timestamp"
-                v-bind:class="{ 'selected': year.isSelected, 'disabled': year.isDisabled }"
-                @click.stop="selectYear(year)">{{ year.year }}</span>
-        </div>
+        <template v-if="!dayViewOnly">
+          <div :class="[calendarClass, 'vdp-datepicker__calendar']" v-show="showYearView" v-bind:style="calendarStyle">
+              <header>
+                  <span @click="previousDecade" class="prev"
+                      v-bind:class="{ 'disabled' : previousDecadeDisabled(pageDate) }">&lt;</span>
+                  <span>{{ getPageDecade() }}</span>
+                  <span @click="nextDecade" class="next"
+                      v-bind:class="{ 'disabled' : nextMonthDisabled(pageDate) }">&gt;</span>
+              </header>
+              <span
+                  class="cell year"
+                  v-for="year in years"
+                  track-by="timestamp"
+                  v-bind:class="{ 'selected': year.isSelected, 'disabled': year.isDisabled }"
+                  @click.stop="selectYear(year)">{{ year.year }}</span>
+          </div>
+        </template>
   </div>
 </template>
 
@@ -89,41 +96,27 @@ export default {
         return val === null || val instanceof Date || typeof val === 'string'
       }
     },
-    name: {
-      value: String
-    },
-    id: {
-      value: String
-    },
+    name: String,
+    id: String,
     format: {
-      value: String,
+      type: [String, Function],
       default: 'dd MMM yyyy'
     },
     language: {
-      value: String,
+      type: String,
       default: 'en'
     },
-    disabled: {
-      type: Object
+    fullMonthName: {
+      type: Boolean,
+      default: false
     },
-    highlighted: {
-      type: Object
-    },
-    placeholder: {
-      type: String
-    },
-    inline: {
-      type: Boolean
-    },
-    calendarClass: {
-      type: [String, Object]
-    },
-    inputClass: {
-      type: [String, Object]
-    },
-    wrapperClass: {
-      type: [String, Object]
-    },
+    disabled: Object,
+    highlighted: Object,
+    placeholder: String,
+    inline: Boolean,
+    calendarClass: [String, Object],
+    inputClass: [String, Object],
+    wrapperClass: [String, Object],
     mondayFirst: {
       type: Boolean,
       default: false
@@ -159,6 +152,10 @@ export default {
     required: {
       type: Boolean,
       default: false
+    },
+    dayViewOnly: {
+      type: Boolean,
+      default: false
     }
   },
   data () {
@@ -168,7 +165,7 @@ export default {
        * This represents the first day of the current viewing month
        * {Number}
        */
-      pageDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1, new Date().getHours(), new Date().getMinutes()).getTime(),
+      pageDate: (new Date()).setDate(1),
       /*
        * Selected Date
        * {Date}
@@ -190,6 +187,9 @@ export default {
   watch: {
     value (value) {
       this.setValue(value)
+    },
+    initialView () {
+      this.setInitialView()
     }
   },
   computed: {
@@ -197,14 +197,17 @@ export default {
       if (!this.selectedDate) {
         return null
       }
-      return DateUtils.formatDate(new Date(this.selectedDate), this.format, this.translation)
+
+      return typeof this.format === 'function'
+        ? this.format(this.selectedDate)
+        : DateUtils.formatDate(new Date(this.selectedDate), this.format, this.translation)
     },
     translation () {
       return DateLanguages.translations[this.language]
     },
     currMonthName () {
       const d = new Date(this.pageDate)
-      return DateUtils.getMonthNameAbbr(d.getMonth(), this.translation.months.abbr)
+      return DateUtils.getMonthNameAbbr(d.getMonth(), this.fullMonthName ? this.translation.months.original : this.translation.months.abbr)
     },
     currYear () {
       const d = new Date(this.pageDate)
@@ -244,7 +247,10 @@ export default {
           isSelected: this.isSelectedDate(dObj),
           isDisabled: this.isDisabledDate(dObj),
           isHighlighted: this.isHighlightedDate(dObj),
-          isToday: dObj.toDateString() === (new Date()).toDateString()
+          isToday: dObj.toDateString() === (new Date()).toDateString(),
+          isWeekend: dObj.getDay() === 0 || dObj.getDay() === 6,
+          isSaturday: dObj.getDay() === 6,
+          isSunday: dObj.getDay() === 0
         })
         dObj.setDate(dObj.getDate() + 1)
       }
@@ -296,6 +302,9 @@ export default {
     },
     isInline () {
       return typeof this.inline !== 'undefined' && this.inline
+    },
+    isRtl () {
+      return this.translation.rtl === true
     }
   },
   methods: {
@@ -321,12 +330,18 @@ export default {
      * @return {mixed} [description]
      */
     showCalendar () {
+      if (this.disabledPicker) {
+        return false
+      }
       if (this.isInline) {
         return false
       }
       if (this.isOpen) {
         return this.close()
       }
+      this.setInitialView()
+    },
+    setInitialView () {
       switch (this.initialView) {
         case 'year':
           this.showYearCalendar()
@@ -348,6 +363,7 @@ export default {
       }
     },
     showMonthCalendar () {
+      if (this.dayViewOnly) return false
       this.close()
       this.showMonthView = true
       if (!this.isInline) {
@@ -465,13 +481,9 @@ export default {
         return false
       }
       let d = new Date(this.pageDate)
-      if (
-        this.disabled.to.getMonth() >= d.getMonth() &&
+
+      return this.disabled.to.getMonth() >= d.getMonth() &&
         this.disabled.to.getFullYear() >= d.getFullYear()
-      ) {
-        return true
-      }
-      return false
     },
 
     nextMonth () {
@@ -489,13 +501,8 @@ export default {
         return false
       }
       let d = new Date(this.pageDate)
-      if (
-        this.disabled.from.getMonth() <= d.getMonth() &&
+      return this.disabled.from.getMonth() <= d.getMonth() &&
         this.disabled.from.getFullYear() <= d.getFullYear()
-      ) {
-        return true
-      }
-      return false
     },
 
     previousYear () {
@@ -513,10 +520,7 @@ export default {
         return false
       }
       let d = new Date(this.pageDate)
-      if (this.disabled.to.getFullYear() >= d.getFullYear()) {
-        return true
-      }
-      return false
+      return this.disabled.to.getFullYear() >= d.getFullYear()
     },
 
     nextYear () {
@@ -534,10 +538,7 @@ export default {
         return false
       }
       let d = new Date(this.pageDate)
-      if (this.disabled.from.getFullYear() <= d.getFullYear()) {
-        return true
-      }
-      return false
+      return this.disabled.from.getFullYear() <= d.getFullYear()
     },
 
     previousDecade () {
@@ -555,10 +556,7 @@ export default {
         return false
       }
       let d = new Date(this.pageDate)
-      if (Math.floor(this.disabled.to.getFullYear() / 10) * 10 >= Math.floor(d.getFullYear() / 10) * 10) {
-        return true
-      }
-      return false
+      return Math.floor(this.disabled.to.getFullYear() / 10) * 10 >= Math.floor(d.getFullYear() / 10) * 10
     },
 
     nextDecade () {
@@ -576,10 +574,7 @@ export default {
         return false
       }
       let d = new Date(this.pageDate)
-      if (Math.ceil(this.disabled.from.getFullYear() / 10) * 10 <= Math.ceil(d.getFullYear() / 10) * 10) {
-        return true
-      }
-      return false
+      return Math.ceil(this.disabled.from.getFullYear() / 10) * 10 <= Math.ceil(d.getFullYear() / 10) * 10
     },
 
     /**
@@ -766,7 +761,7 @@ export default {
       if (!date) {
         date = new Date()
       }
-      this.pageDate = new Date(date.getFullYear(), date.getMonth(), 1, date.getHours(), date.getMinutes()).getTime()
+      this.pageDate = (new Date(date)).setDate(1)
     },
 
     /**
@@ -784,12 +779,24 @@ export default {
       }
     },
 
+    dayClasses (day) {
+      return {
+        'selected': day.isSelected,
+        'disabled': day.isDisabled,
+        'highlighted': day.isHighlighted,
+        'today': day.isToday,
+        'weekend': day.isWeekend,
+        'sat': day.isSaturday,
+        'sun': day.isSunday
+      }
+    },
+
     init () {
       if (this.value) {
         this.setValue(this.value)
       }
       if (this.isInline) {
-        this.showDayCalendar()
+        this.setInitialView()
       }
     }
   },
@@ -812,6 +819,8 @@ export default {
 
 $width = 300px
 
+.rtl
+    direction:rtl
 .vdp-datepicker
     position relative
     text-align left
@@ -870,6 +879,10 @@ $width = 300px
     .disabled
         color #ddd
         cursor default
+    .flex-rtl
+        display flex
+        width inherit
+        flex-wrap wrap
 
     .cell
         display inline-block
